@@ -1,0 +1,8 @@
+/api/gen_scrappy/.idea/
+/.idea/
+/venv/
+/shelf/
+/workspace.xml
+*.pyc
+*~
+*.swp

@@ -1,0 +1,55 @@
+version: '3'
+services:
+  django:
+    build: .
+    container_name: django
+#    command: python3 manage.py runserver ${DJANGO_ALLOWED_HOSTS_PROD}:${DJANGO_PORT}
+    command: gunicorn --bind ${DJANGO_ALLOWED_HOSTS_PROD}:${DJANGO_PORT} scrapy.wsgi
+    volumes:
+      - .:/usr/src/app/
+    env_file:
+      - .env
+    ports:
+      - ${DJANGO_PORT}:${DJANGO_PORT}
+    depends_on:
+      - mongodb
+      - redis
+    links:
+      - mongodb
+
+  celery:
+    build: .
+    command: celery -A scrapy worker -P eventlet -c 50
+    volumes:
+      - .:/usr/src/app/
+    depends_on:
+      - django
+      - redis
+      - mongodb
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=mongodb
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - ${MONGODB_PORT}:${MONGODB_PORT}
+    command: mongod
+    volumes:
+      - mongodb_data_container:/data/db
+  redis:
+    image: "redis:latest"
+
+#  pytest:
+#    build: .
+##    command: coverage report
+#    command: pytest
+#    volumes:
+#      - .:/usr/src/app/
+#    depends_on:
+#      - redis
+#      - mongodb
+
+volumes:
+  mongodb_data_container:
